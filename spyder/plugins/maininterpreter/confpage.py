@@ -11,6 +11,7 @@ import os
 import os.path as osp
 
 # Third party imports
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (QButtonGroup, QGroupBox, QInputDialog, QLabel,
                             QLineEdit, QMessageBox, QPushButton, QVBoxLayout)
 
@@ -31,6 +32,8 @@ class MainInterpreterConfigPage(PluginConfigPage):
         self.plugin_container = plugin.get_container()
 
         self.cus_exec_radio = None
+        self.venv_exec_radio = None
+        self.venv_folder_edit = None
         self.pyexec_edit = None
         self.cus_exec_combo = None
         self.conda_edit = None
@@ -83,6 +86,11 @@ class MainInterpreterConfigPage(PluginConfigPage):
             'custom',
             button_group=pyexec_bg,
         )
+        self.venv_exec_radio = self.create_radiobutton(
+            _("Automatically from project virtual environment"),
+            'venv',
+            button_group=pyexec_bg,
+        )
 
         if os.name == 'nt':
             filters = _("Executables") + " (*.exe)"
@@ -106,11 +114,34 @@ class MainInterpreterConfigPage(PluginConfigPage):
         self.cus_exec_combo.setStyleSheet("margin-left: 3px")
         self.cus_exec_combo.combobox.setMinimumWidth(400)
 
-        self.def_exec_radio.radiobutton.toggled.connect(
-            self.cus_exec_combo.setDisabled)
         self.cus_exec_radio.radiobutton.toggled.connect(
             self.cus_exec_combo.setEnabled)
+        self.cus_exec_combo.setEnabled(
+            self.cus_exec_radio.radiobutton.isChecked()
+        )
+
         pyexec_layout.addWidget(self.cus_exec_combo)
+        pyexec_layout.addWidget(self.venv_exec_radio)
+
+        self.venv_folder_edit = self.create_lineedit(
+            _("Virtual environment folder:"),
+            'venv_folder',
+            alignment=Qt.Horizontal,
+            tip=_(
+                "Name of the virtual environment folder to search for in the "
+                "project root when a project is opened (e.g. \".venv\", "
+                "\"venv\", \".virtualenv\")."
+            ),
+        )
+        self.venv_folder_edit.setStyleSheet("margin-left: 3px")
+        self.venv_exec_radio.radiobutton.toggled.connect(
+            self.venv_folder_edit.setEnabled
+        )
+        self.venv_folder_edit.setEnabled(
+            self.venv_exec_radio.radiobutton.isChecked()
+        )
+        pyexec_layout.addWidget(self.venv_folder_edit)
+
         pyexec_group.setLayout(pyexec_layout)
 
         self.pyexec_edit = self.cus_exec_combo.combobox.lineEdit()
@@ -248,7 +279,7 @@ class MainInterpreterConfigPage(PluginConfigPage):
 
     def perform_adjustments(self):
         """Perform some adjustments to the page after applying preferences."""
-        if not self.def_exec_radio.radiobutton.isChecked():
+        if self.cus_exec_radio.radiobutton.isChecked():
             # Get current executable
             executable = self.pyexec_edit.text()
             executable = osp.normpath(executable)

@@ -146,6 +146,8 @@ DEFAULTS = [
              {
               'default': True,
               'custom': False,
+              'venv': False,
+              'venv_folder': '.venv',
               'custom_conda': False,
               'umr/enabled': True,
               'umr/verbose': True,

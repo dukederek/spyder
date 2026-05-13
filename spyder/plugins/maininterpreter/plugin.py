@@ -118,3 +118,8 @@ class MainInterpreter(SpyderPluginV2):
         self.set_conf("custom", True)
         self.set_conf("custom_interpreter", interpreter)
         self.set_conf("executable", interpreter)
+
+    def set_venv_executable(self, interpreter):
+        """Update the active executable without touching the other conf."""
+        self.get_container().add_to_custom_interpreters(interpreter)
+        self.set_conf("executable", interpreter)

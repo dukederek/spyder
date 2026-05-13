@@ -10,6 +10,7 @@ IPython Console plugin based on QtConsole.
 
 # Standard library imports
 from functools import cached_property
+import os
 import re
 import sys
 from typing import List, Optional
@@ -749,6 +750,28 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
     # -------------------------------------------------------------------------
     def _on_project_loaded(self, path):
         self.get_widget().update_active_project_path(path)
+        main_interpreter = self.get_plugin(Plugins.MainInterpreter)
+        if main_interpreter.get_conf('venv'):
+            self._set_venv_interpreter(path, main_interpreter)
+
+    def _set_venv_interpreter(self, project_path, main_interpreter):
+        """Switch to the project's venv Python if one can be located."""
+        # Structure in venv folders differs based on platform, build the path
+        # to the executable appropriately.
+        venv_folder_name = main_interpreter.get_conf('venv_folder')
+        if sys.platform == 'win32':
+            venv_python = os.path.join(
+                project_path, venv_folder_name, 'Scripts', 'python.exe'
+            )
+        else:
+            venv_python = os.path.join(
+                project_path, venv_folder_name, 'bin', 'python'
+            )
+
+        # Check the (theorised) Python executable actually exists where we
+        # think it does before changing anything.
+        if os.path.isfile(venv_python):
+            main_interpreter.set_venv_executable(venv_python)
 
     def _on_project_closed(self):
         self.get_widget().update_active_project_path(None)
